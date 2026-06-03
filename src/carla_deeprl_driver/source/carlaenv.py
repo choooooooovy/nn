@@ -75,6 +75,7 @@ class CarlaEnv(object):
         self.draw_speed_hud()
         observation, collision = self.agent.retrieve_data(frame_index)
         reward = self.get_reward(action_index, collision)
+        self.draw_reward_hud(reward, collision)
         done = 1 if collision != 0 else 0
         return observation, reward, done
 
@@ -199,6 +200,42 @@ class CarlaEnv(object):
                 draw_shadow=True
             )
 
+    def draw_reward_hud(self, reward, collision):
+        if self.agent and self.agent.actor_car:
+            vehicle_transform = self.agent.actor_car.get_transform()
+            vehicle_location = vehicle_transform.location
+            
+            # Draw reward info behind the vehicle
+            behind_dir = carla.Vector3D(
+                x=-math.cos(math.radians(vehicle_transform.rotation.yaw)) * 8,
+                y=-math.sin(math.radians(vehicle_transform.rotation.yaw)) * 8,
+                z=3
+            )
+            hud_location = carla.Location(
+                x=vehicle_location.x + behind_dir.x,
+                y=vehicle_location.y + behind_dir.y,
+                z=vehicle_location.z + behind_dir.z
+            )
+            
+            # Color based on reward
+            if collision != 0:
+                text = f"COLLISION! Reward: {reward:.1f}"
+                color = carla.Color(255, 0, 0)
+            elif reward > 0:
+                text = f"Reward: +{reward:.1f}"
+                color = carla.Color(0, 255, 0)
+            else:
+                text = f"Reward: {reward:.1f}"
+                color = carla.Color(255, 255, 0)
+            
+            self.world.debug.draw_string(
+                hud_location,
+                text,
+                color=color,
+                life_time=0.5,
+                draw_shadow=True
+            )
+
     def exit_env(self):
         self.cleanup_world()
         settings = self.world.get_settings()
@@ -221,5 +258,6 @@ class CarlaEnv(object):
         self.draw_speed_hud()
         observation, collision = self.agent.retrieve_data(frame_index)
         reward = self.reward_sac(collision)
+        self.draw_reward_hud(reward, collision)
         done = 1 if collision != 0 else 0
         return observation, reward, done
