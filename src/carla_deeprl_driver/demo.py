@@ -9,7 +9,7 @@ os.chdir(r'c:\Users\12698\Desktop\carla_deeprl_driver')
 import carla
 
 print("=" * 60)
-print("CARLA Demo - Direction Arrow + HUD + Gear")
+print("CARLA Demo - Vehicle Status Display")
 print("=" * 60)
 
 print("\n[1] Connecting...")
@@ -29,23 +29,33 @@ spawn_point = random.choice(spawn_points)
 vehicle = world.spawn_actor(vehicle_bp, spawn_point)
 print("    RED Tesla ready!")
 
-print("\n[3] Driving with Direction Arrow + HUD + Gear")
+print("\n[3] Driving with Vehicle Status Display")
 print("-" * 60)
 
 reward = 0
-for i in range(30):
-    # 模拟换挡：前10秒前进，中间刹车，后10秒倒车
+throttle = 0.0
+steer = 0.0
+for i in range(50):
+    # 动态控制车辆：加速、转弯
     if i < 10:
-        vehicle.apply_control(carla.VehicleControl(throttle=0.3, steer=0.0, reverse=False))
+        throttle = min(0.5, throttle + 0.1)
+        steer = 0.0
         gear = 'D'
-    elif i < 15:
-        vehicle.apply_control(carla.VehicleControl(throttle=0.0, steer=0.0, brake=1.0, reverse=False))
+    elif i < 25:
+        throttle = 0.5
+        steer = math.sin((i-10) * 0.15) * 0.3
+        gear = 'D'
+    elif i < 35:
+        throttle = 0.0
+        steer = 0.0
         gear = 'N'
     else:
-        vehicle.apply_control(carla.VehicleControl(throttle=0.3, steer=0.0, reverse=True))
+        throttle = min(0.4, throttle + 0.08)
+        steer = -0.2
         gear = 'R'
     
-    time.sleep(0.15)
+    vehicle.apply_control(carla.VehicleControl(throttle=throttle, steer=steer, reverse=(gear == 'R')))
+    time.sleep(0.1)
     
     velocity = vehicle.get_velocity()
     speed_ms = math.sqrt(velocity.x**2 + velocity.y**2 + velocity.z**2)
@@ -71,7 +81,7 @@ for i in range(30):
     )
     spectator.set_transform(carla.Transform(camera_loc, carla.Rotation(pitch=-20, yaw=v_rot.yaw)))
     
-    # Draw DIRECTION ARROW (big arrow in front of car)
+    # Draw DIRECTION ARROW
     arrow_start = carla.Location(
         x=v_loc.x + math.cos(math.radians(v_rot.yaw)) * 5,
         y=v_loc.y + math.sin(math.radians(v_rot.yaw)) * 5,
@@ -82,64 +92,83 @@ for i in range(30):
         y=v_loc.y + math.sin(math.radians(v_rot.yaw)) * 10,
         z=v_loc.z + 0.5
     )
-    
-    # Draw arrow line
-    world.debug.draw_line(
-        arrow_start,
-        arrow_end,
-        thickness=0.3,
-        color=carla.Color(0, 255, 255),
-        life_time=0.5
-    )
+    world.debug.draw_line(arrow_start, arrow_end, thickness=0.3, color=carla.Color(0, 255, 255), life_time=0.5)
     
     # Draw arrow head
-    arrow_head_length = 2
-    arrow_head_angle = 30
-    
     for side in [-1, 1]:
         head_end = carla.Location(
-            x=arrow_end.x - math.cos(math.radians(v_rot.yaw + side * arrow_head_angle)) * arrow_head_length,
-            y=arrow_end.y - math.sin(math.radians(v_rot.yaw + side * arrow_head_angle)) * arrow_head_length,
+            x=arrow_end.x - math.cos(math.radians(v_rot.yaw + side * 30)) * 2,
+            y=arrow_end.y - math.sin(math.radians(v_rot.yaw + side * 30)) * 2,
             z=arrow_end.z
         )
         world.debug.draw_line(arrow_end, head_end, thickness=0.2, color=carla.Color(0, 255, 255), life_time=0.5)
     
-    # Draw Speed HUD
-    hud_location = carla.Location(
-        x=v_loc.x + math.cos(math.radians(v_rot.yaw)) * 12,
-        y=v_loc.y + math.sin(math.radians(v_rot.yaw)) * 12,
-        z=v_loc.z + 3
-    )
+    # Vehicle Status Display (right side of the car)
+    status_x = v_loc.x + math.cos(math.radians(v_rot.yaw)) * 8
+    status_y = v_loc.y + math.sin(math.radians(v_rot.yaw)) * 8
     
+    # Title
     world.debug.draw_string(
-        hud_location,
-        f"===== SPEED: {speed_kmh:.1f} km/h =====",
-        color=carla.Color(255, 255, 0),
-        life_time=0.5,
+        carla.Location(x=status_x, y=status_y, z=v_loc.z + 5),
+        "VEHICLE STATUS",
+        color=carla.Color(255, 255, 255),
+        life_time=0.3,
         draw_shadow=True
     )
     
+    # Speed (color changes based on speed)
+    speed_color = carla.Color(0, 255, 0) if speed_kmh < 30 else (carla.Color(255, 255, 0) if speed_kmh < 60 else carla.Color(255, 0, 0))
     world.debug.draw_string(
-        hud_location + carla.Location(z=1.5),
-        f"Reward: +{reward:.1f}",
-        color=carla.Color(0, 255, 0),
-        life_time=0.5,
+        carla.Location(x=status_x, y=status_y, z=v_loc.z + 4),
+        f"Speed: {speed_kmh:.1f} km/h",
+        color=speed_color,
+        life_time=0.3,
         draw_shadow=True
     )
     
-    # Draw Gear HUD
+    # Gear
     gear_color = carla.Color(0, 255, 0) if gear == 'D' else (carla.Color(255, 0, 0) if gear == 'R' else carla.Color(255, 255, 0))
-    gear_location = carla.Location(x=v_loc.x, y=v_loc.y, z=v_loc.z + 3)
     world.debug.draw_string(
-        gear_location,
-        f"[ {gear} ]",
+        carla.Location(x=status_x, y=status_y, z=v_loc.z + 3),
+        f"Gear: [{gear}]",
         color=gear_color,
-        life_time=0.5,
+        life_time=0.3,
         draw_shadow=True
     )
+    
+    # Throttle bar
+    throttle_bar = "█" * int(throttle * 10) + "░" * (10 - int(throttle * 10))
+    world.debug.draw_string(
+        carla.Location(x=status_x, y=status_y, z=v_loc.z + 2),
+        f"Throttle: [{throttle_bar}]",
+        color=carla.Color(0, 255, 0),
+        life_time=0.3,
+        draw_shadow=True
+    )
+    
+    # Brake bar
+    brake = 1.0 if i >= 25 and i < 30 else 0.0
+    brake_bar = "█" * int(brake * 10) + "░" * (10 - int(brake * 10))
+    world.debug.draw_string(
+        carla.Location(x=status_x, y=status_y, z=v_loc.z + 1),
+        f"Brake:   [{brake_bar}]",
+        color=carla.Color(255, 0, 0),
+        life_time=0.3,
+        draw_shadow=True
+    )
+    
+    # Steering direction
+    steer_dir = "←" if steer < -0.1 else ("→" if steer > 0.1 else "↑")
+    world.debug.draw_string(
+        carla.Location(x=status_x, y=status_y, z=v_loc.z),
+        f"Steer: {steer_dir} ({steer:.2f})",
+        color=carla.Color(0, 255, 255),
+        life_time=0.3,
+        draw_shadow=True
+    )
+    
+    if i % 10 == 0:
+        print(f"    Step {i+1}/50: Speed={speed_kmh:.1f} km/h, Gear={gear}, Throttle={throttle:.1f}")
 
-    if i % 5 == 0:
-        print(f"    Step {i+1}/30: Speed = {speed_kmh:.1f} km/h, Gear = {gear}")
-
-print("\n[DONE] Check the GEAR display [D]/[R]/[N] on the car!")
+print("\n[DONE] Check the Vehicle Status Display on the right side!")
 vehicle.destroy()

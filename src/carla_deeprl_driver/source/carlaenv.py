@@ -77,6 +77,7 @@ class CarlaEnv(object):
         self.update_spectator()
         self.draw_speed_hud()
         self.draw_gear_hud()
+        self.draw_vehicle_status()
         observation, collision = self.agent.retrieve_data(frame_index)
         reward = self.get_reward(action_index, collision)
         self.draw_reward_hud(reward, collision)
@@ -312,6 +313,85 @@ class CarlaEnv(object):
                 draw_shadow=True
             )
 
+    def draw_vehicle_status(self):
+        """绘制综合车辆状态显示器"""
+        if self.agent and self.agent.actor_car:
+            vehicle_transform = self.agent.actor_car.get_transform()
+            vehicle_location = vehicle_transform.location
+            control = self.agent.actor_car.get_control()
+            
+            # 状态显示器位置（车前方偏右）
+            status_x = vehicle_location.x + math.cos(math.radians(vehicle_transform.rotation.yaw)) * 8
+            status_y = vehicle_location.y + math.sin(math.radians(vehicle_transform.rotation.yaw)) * 8
+            
+            # 显示标题
+            title_loc = carla.Location(x=status_x, y=status_y, z=vehicle_location.z + 5)
+            self.world.debug.draw_string(
+                title_loc,
+                "VEHICLE STATUS",
+                color=carla.Color(255, 255, 255),
+                life_time=0.1,
+                draw_shadow=True
+            )
+            
+            # 显示速度
+            speed_kmh, speed_ms = self.get_speed()
+            speed_loc = carla.Location(x=status_x, y=status_y, z=vehicle_location.z + 4)
+            speed_color = carla.Color(0, 255, 0) if speed_kmh < 60 else (carla.Color(255, 255, 0) if speed_kmh < 100 else carla.Color(255, 0, 0))
+            self.world.debug.draw_string(
+                speed_loc,
+                f"Speed: {speed_kmh:.1f} km/h",
+                color=speed_color,
+                life_time=0.1,
+                draw_shadow=True
+            )
+            
+            # 显示档位
+            gear = self.get_gear()
+            gear_loc = carla.Location(x=status_x, y=status_y, z=vehicle_location.z + 3)
+            gear_color = carla.Color(0, 255, 0) if gear == 'D' else (carla.Color(255, 0, 0) if gear == 'R' else carla.Color(255, 255, 0))
+            self.world.debug.draw_string(
+                gear_loc,
+                f"Gear: [{gear}]",
+                color=gear_color,
+                life_time=0.1,
+                draw_shadow=True
+            )
+            
+            # 显示油门状态
+            throttle_loc = carla.Location(x=status_x, y=status_y, z=vehicle_location.z + 2)
+            throttle_bar = "█" * int(control.throttle * 10) + "░" * (10 - int(control.throttle * 10))
+            self.world.debug.draw_string(
+                throttle_loc,
+                f"Throttle: [{throttle_bar}]",
+                color=carla.Color(0, 255, 0),
+                life_time=0.1,
+                draw_shadow=True
+            )
+            
+            # 显示刹车状态
+            brake_loc = carla.Location(x=status_x, y=status_y, z=vehicle_location.z + 1)
+            brake_bar = "█" * int(control.brake * 10) + "░" * (10 - int(control.brake * 10))
+            self.world.debug.draw_string(
+                brake_loc,
+                f"Brake:   [{brake_bar}]",
+                color=carla.Color(255, 0, 0),
+                life_time=0.1,
+                draw_shadow=True
+            )
+            
+            # 显示方向盘角度
+            steer_loc = carla.Location(x=status_x, y=status_y, z=vehicle_location.z)
+            steer_angle = control.steer
+            steer_dir = "←" if steer_angle < -0.1 else ("→" if steer_angle > 0.1 else "↑")
+            self.world.debug.draw_string(
+                steer_loc,
+                f"Steer: {steer_dir} ({steer_angle:.2f})",
+                color=carla.Color(0, 255, 255),
+                life_time=0.1,
+                draw_shadow=True
+            )
+
     def exit_env(self):
         self.cleanup_world()
         settings = self.world.get_settings()
@@ -333,6 +413,7 @@ class CarlaEnv(object):
         self.update_spectator()
         self.draw_speed_hud()
         self.draw_gear_hud()
+        self.draw_vehicle_status()
         observation, collision = self.agent.retrieve_data(frame_index)
         reward = self.reward_sac(collision)
         self.draw_reward_hud(reward, collision)
