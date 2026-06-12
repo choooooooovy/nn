@@ -1,193 +1,193 @@
-# CARLA Deep Reinforcement Learning Driver
+# CARLA 深度强化学习自动驾驶系统
 
-This repository implements a reinforcement learning-based autonomous vehicle control system using the [`CARLA Simulator (version 0.9.13)`](https://carla.org/). The project aims to train an intelligent agent that can navigate through complex urban environments using deep reinforcement learning algorithms.
+本仓库使用 [`CARLA Simulator (version 0.9.13)`](https://carla.org/) 实现了一个基于强化学习的自动驾驶控制系统。该项目旨在训练一个智能代理，能够通过深度强化学习算法在复杂的城市环境中导航。
 
-## 📋 Project Overview
+## 📋 项目概述
 
-The goal of this project is to develop a robust autonomous driving agent that can:
-- Navigate through CARLA's urban environments
-- Avoid collisions with other vehicles and obstacles
-- Make intelligent driving decisions based on visual input
-- Learn optimal driving policies through reinforcement learning
+本项目的目标是开发一个健壮的自动驾驶智能代理，能够：
+- 在 CARLA 的城市环境中导航
+- 避免与其他车辆和障碍物碰撞
+- 基于视觉输入做出智能驾驶决策
+- 通过强化学习学习最优驾驶策略
 
-## 🛠️ Environment Setup
+## 🛠️ 环境设置
 
-### Prerequisites
-1. **CARLA Simulator 0.9.13** - Download from official or mirror sources
-2. **Python 3.6+** - Required for CARLA Python API compatibility
-3. **conda** - Recommended for environment management
+### 前置条件
+1. **CARLA Simulator 0.9.13** - 从官方或镜像源下载
+2. **Python 3.6+** - 确保与 CARLA Python API 兼容
+3. **conda** - 推荐用于环境管理
 
-### Installation Steps
+### 安装步骤
 
-#### Step 1: Download CARLA Simulator
+#### 步骤 1: 下载 CARLA Simulator
 ```bash
-# Option 1: Download from SUSTech mirror (recommended for China)
+# 选项 1: 从 SUSTech 镜像下载（中国推荐）
 wget https://mirrors.sustech.edu.cn/carla/carla/0.9.13/CARLA_0.9.13.tar.gz
 tar -zxvf CARLA_0.9.13.tar.gz
 
-# Option 2: Download from official website
+# 选项 2: 从官方网站下载
 # https://github.com/carla-simulator/carla/releases/tag/0.9.13
 ```
 
-#### Step 2: Set Up Python Environment
+#### 步骤 2: 设置 Python 环境
 ```bash
-# Create conda environment
+# 创建 conda 环境
 conda env create -f environment.yml
 conda activate carla-rl
 
-# Install dependencies manually (if needed)
+# 手动安装依赖（如有需要）
 pip install -r requirements.txt
 ```
 
-#### Step 3: Launch CARLA Server
+#### 步骤 3: 启动 CARLA Server
 ```bash
-# Navigate to CARLA directory
+# 导航到 CARLA 目录
 cd CARLA_0.9.13
 
-# Start CARLA server in off-screen mode (recommended for training)
+# 在屏幕外模式下启动 CARLA server（推荐用于训练）
 ./CarlaUE4.sh -RenderOffScreen
 
-# Or start with visualization (for testing/demonstration)
+# 或者带可视化启动（用于测试/演示）
 # ./CarlaUE4.sh
 ```
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Run A2C Algorithm
+### 运行 A2C 算法
 ```bash
 python main.py
 ```
 
-### Run SAC Algorithm
+### 运行 SAC 算法
 ```bash
 python run_sac.py
 ```
 
-## 📁 Project Structure
+## 📁 项目结构
 
 ```
 .
-├── source/                      # Core source code
+├── source/                      # 核心源代码
 │   ├── __init__.py
-│   ├── agent.py                 # ActorCar class with sensors
-│   ├── carlaenv.py              # CARLA environment wrapper
-│   ├── model.py                 # A2C Actor-Critic model
-│   ├── sac.py                   # SAC implementation
-│   ├── trainer.py               # A2C training loop
-│   ├── sac_trainer.py           # SAC training loop
-│   ├── replaybuffer.py          # Replay buffer implementation
-│   └── utility.py               # Utility functions
-├── config.yaml                  # Configuration file
-├── main.py                      # A2C entry point
-├── run_sac.py                   # SAC entry point
-├── requirements.txt             # Python dependencies
-├── test.py                      # Test scripts
-├── test_env.py                  # Environment test
-└── README.md                    # Project documentation
+│   ├── agent.py                 # ActorCar 类，包含传感器
+│   ├── carlaenv.py              # CARLA 环境封装
+│   ├── model.py                 # A2C Actor-Critic 模型
+│   ├── sac.py                   # SAC 实现
+│   ├── trainer.py               # A2C 训练循环
+│   ├── sac_trainer.py           # SAC 训练循环
+│   ├── replaybuffer.py          # 经验回放缓冲区实现
+│   └── utility.py               # 工具函数
+├── config.yaml                  # 配置文件
+├── main.py                      # A2C 入口点
+├── run_sac.py                   # SAC 入口点
+├── requirements.txt             # Python 依赖
+├── test.py                      # 测试脚本
+├── test_env.py                  # 环境测试
+└── README.md                    # 项目文档
 ```
 
-## ⚙️ Configuration
+## ⚙️ 配置说明
 
-All training parameters can be configured in `config.yaml`:
+所有训练参数都可以在 `config.yaml` 中配置：
 
-| Parameter | Description | Default |
+| 参数 | 描述 | 默认值 |
 | :-------- | :---------- | :------ |
-| `host` | CARLA server host | localhost |
-| `port` | CARLA server port | 2000 |
-| `car_num` | Number of NPC vehicles | 50 |
-| `lr` | Learning rate | 0.001 |
-| `gamma` | Discount factor | 0.99 |
-| `buffer_size` | Replay buffer size | 1000 |
-| `hidden_dim` | Hidden layer dimension | 1024 |
-| `epoch` | Training epochs | 500 |
-| `max_episode_length` | Max steps per episode | 3000 |
+| `host` | CARLA server 主机地址 | localhost |
+| `port` | CARLA server 端口 | 2000 |
+| `car_num` | NPC 车辆数量 | 50 |
+| `lr` | 学习率 | 0.001 |
+| `gamma` | 折扣因子 | 0.99 |
+| `buffer_size` | 经验回放缓冲区大小 | 1000 |
+| `hidden_dim` | 隐藏层维度 | 1024 |
+| `epoch` | 训练轮数 | 500 |
+| `max_episode_length` | 每回合最大步数 | 3000 |
 
-## 📐 Design Details
+## 📐 设计细节
 
-### CARLA World Settings
-- Uses default CARLA town environment
-- Deploys and destroys vehicles on reset instead of reloading the entire world
-- Retrieves RGB camera frames in synchronous mode
-- Converts frames to tensors for efficient storage in replay buffer
+### CARLA 世界设置
+- 使用默认的 CARLA 城镇环境
+- 重置时部署和销毁车辆，而不是重新加载整个世界
+- 以同步模式获取 RGB 相机帧
+- 将帧转换为张量以高效存储在经验回放缓冲区中
 
-### Agent Configuration
-- Spawns agent at a random spawn point (after NPCs)
-- Equipped with `sensor.camera.rgb` and `sensor.other.collision`
-- Observes visual input (640x480 RGB) and collision events
-- Image preprocessing: resize to 256x256, center crop to 224x224
+### 智能体配置
+- 在随机生成点生成智能体（在 NPC 之后）
+- 配备 `sensor.camera.rgb` 和 `sensor.other.collision`
+- 观察视觉输入（640x480 RGB）和碰撞事件
+- 图像预处理：调整大小到 256x256，中心裁剪到 224x224
 
-### Action Space
+### 动作空间
 
-**A2C (Discrete):**
+**A2C（离散）:**
 
-| Action Index | Action Description | Vehicle Control |
+| 动作索引 | 动作描述 | 车辆控制 |
 | :----------: | :----------------: | :-------------: |
-|      0       |     Go Straight    | `(1, 0, 0)`     |
-|      1       |      Turn Left     | `(1, -1, 0)`    |
-|      2       |     Turn Right     | `(1, 1, 0)`     |
-|      3       |       Brake        | `(0, 0, 1)`     |
+|      0       |     直行     | `(1, 0, 0)`     |
+|      1       |      左转     | `(1, -1, 0)`    |
+|      2       |     右转     | `(1, 1, 0)`     |
+|      3       |       刹车        | `(0, 0, 1)`     |
 
-**SAC (Continuous):**
-- Steering control only: `[-1, 1]`
-- Fixed throttle: `1.0`
-- No brake
+**SAC（连续）:**
+- 仅转向控制：`[-1, 1]`
+- 固定油门：`1.0`
+- 无刹车
 
-### Reward Function
+### 奖励函数
 
-**A2C Reward Scheme:**
+**A2C 奖励方案:**
 
-| Reward | Event |
+| 奖励 | 事件 |
 | :----: | :---- |
-|  -200  | Collision detected |
-|  -100  | Brake action taken |
-|   +5   | Go straight action |
-|   +1   | Turn left/right action |
+|  -200  | 检测到碰撞 |
+|  -100  | 执行刹车动作 |
+|   +5   | 执行直行动作 |
+|   +1   | 执行左转/右转动作 |
 
-**SAC Reward Scheme:**
+**SAC 奖励方案:**
 
-| Reward | Event |
+| 奖励 | 事件 |
 | :----: | :---- |
-|  -200  | Collision detected |
-|   +1   | All other actions |
+|  -200  | 检测到碰撞 |
+|   +1   | 所有其他动作 |
 
-### Implemented RL Algorithms
-- **A2C (Advantage Actor-Critic)** - Discrete action space with ResNet50 backbone
-- **SAC (Soft Actor-Critic)** - Continuous action space with automatic entropy tuning
+### 已实现的 RL 算法
+- **A2C (Advantage Actor-Critic)** - 离散动作空间，使用 ResNet50 作为骨干网络
+- **SAC (Soft Actor-Critic)** - 连续动作空间，带自动熵调整
 
-## ✅ Progress Tracking
+## ✅ 进度跟踪
 
-### Core Implementation
-- [x] CARLA environment wrapper (OpenAI Gym compatible)
-- [x] RGB camera and collision sensor integration
-- [x] Synchronous mode simulation
-- [x] Efficient world reset mechanism
+### 核心实现
+- [x] CARLA 环境封装（兼容 OpenAI Gym）
+- [x] RGB 相机和碰撞传感器集成
+- [x] 同步模式模拟
+- [x] 高效的世界重置机制
 
-### RL Components
-- [x] A2C algorithm implementation
-- [x] SAC algorithm implementation
-- [x] Replay buffer with trajectory management
-- [x] TensorBoard logging
+### RL 组件
+- [x] A2C 算法实现
+- [x] SAC 算法实现
+- [x] 带轨迹管理的经验回放缓冲区
+- [x] TensorBoard 日志记录
 
-### Testing & Debugging
-- [x] Environment test scripts
-- [x] Connection test
-- [x] Replay buffer test
+### 测试与调试
+- [x] 环境测试脚本
+- [x] 连接测试
+- [x] 经验回放缓冲区测试
 
-### Future Work
-- [ ] Code refactoring and optimization
-- [ ] Performance improvement
-- [ ] Advanced reward engineering
-- [ ] Multi-agent scenarios
+### 未来工作
+- [ ] 代码重构和优化
+- [ ] 性能改进
+- [ ] 高级奖励设计
+- [ ] 多智能体场景
 
-## 🧠 Model Architecture
+## 🧠 模型架构
 
 ### A2C Actor-Critic
 ```
-Input (224x224 RGB)
+输入 (224x224 RGB)
     ↓
-ResNet50 (pretrained, frozen)
+ResNet50 (预训练，冻结)
     ↓
-Fully Connected Layers (3 layers, 1024 hidden dim)
+全连接层 (3层，1024 隐藏维度)
     ↓
 ┌─────────────┬─────────────┐
 │  Actor Head │ Critic Head │
@@ -197,34 +197,48 @@ Fully Connected Layers (3 layers, 1024 hidden dim)
 └─────────────┴─────────────┘
 ```
 
-### SAC Networks
-- **Value Network**: ResNet50 + FC layers → scalar output
-- **Soft Q Network**: ResNet50 + FC layers (with action input) → scalar Q-value
-- **Policy Network**: ResNet50 + FC layers → Gaussian distribution parameters
+### SAC 网络
+- **Value Network**: ResNet50 + FC 层 → 标量输出
+- **Soft Q Network**: ResNet50 + FC 层（带动作输入）→ 标量 Q 值
+- **Policy Network**: ResNet50 + FC 层 → 高斯分布参数
 
-## 💡 Training Tips
+## 💡 训练提示
 
-### Hardware Considerations
-To run on limited computational resources (e.g., 1 RTX 3060):
-- Use online A2C (sample one episode then update)
-- Directly resize and crop frames upon reception
-- Store data in Tensor type to save memory
-- Test with smaller episode lengths initially
+### 硬件考虑
+在有限计算资源上运行（例如 1 RTX 3060）：
+- 使用在线 A2C（采样一个回合然后更新）
+- 接收帧后直接调整大小和裁剪
+- 以 Tensor 类型存储数据以节省内存
+- 初始测试时使用较小的回合长度
 
-### Monitoring Training
+### 监控训练
 ```bash
-# Launch TensorBoard
+# 启动 TensorBoard
 tensorboard --logdir=./log/
 ```
 
-### Model Checkpoints
-Checkpoints are saved automatically when average episode frames improve:
+### 模型检查点
+当平均回合帧数改善时自动保存检查点：
 - A2C: `checkpoints/a2c/model{epoch}.pt`
 - SAC: `checkpoints/sac/{network}{epoch}.pt`
 
-## 📝 License
-This project is for educational purposes as part of the reinforcement learning course.
+## 📝 许可证
+本项目仅供强化学习课程教学使用。
 
-## 🤝 Acknowledgments
-- [CARLA Simulator](https://carla.org/) for providing the simulation environment
-- OpenAI Gym for the environment interface standard
+## 🤝 致谢
+- [CARLA Simulator](https://carla.org/) 提供模拟环境
+- OpenAI Gym 提供环境接口标准
+
+---
+
+## 🔧 功能增强
+
+### 第二视角显示
+- 添加了俯视视角摄像头，实时显示车辆上方视角
+- 使用 OpenCV 弹出独立窗口显示第二视角
+- 支持第三人称跟随镜头和俯视视角同时显示
+
+### HUD 显示
+- 实时速度显示（车辆上方绿色数字）
+- 档位显示（D/N）
+- 平滑镜头跟随效果
